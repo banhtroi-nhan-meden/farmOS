@@ -45,7 +45,7 @@
             border: 1px solid rgba(46, 125, 50, 0.1);
         }
 
-        /* Progress Bar cuộn ngang di động */
+        /* Progress Bar di động */
         .progress-container {
             display: flex;
             justify-content: space-between;
@@ -332,13 +332,20 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* CSS ẩn bớt thanh trạng thái phụ khi kết xuất bản in PDF */
+        @media print {
+            .progress-container, .nav-buttons, .file-upload-container {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
 
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
-    <div id="loadingText">Đang khởi tạo...</div>
+    <div id="loadingText">Đang xử lý biểu mẫu...</div>
 </div>
 
 <div class="form-container" id="formContainer">
@@ -704,7 +711,7 @@
             <div class="question-group">
                 <div class="question-title">9.2 Các nhóm chi phí cần theo dõi:</div>
                 <div class="option-list">
-                    <label class="option-item"><input type="checkbox" name="9_2_Group_PhanBon" value="Có"><span class="option-text">Phan bón</span></label>
+                    <label class="option-item"><input type="checkbox" name="9_2_Group_PhanBon" value="Có"><span class="option-text">Phân bón</span></label>
                     <label class="option-item"><input type="checkbox" name="9_2_Group_Thuoc" value="Có"><span class="option-text">Thuốc</span></label>
                     <label class="option-item"><input type="checkbox" name="9_2_Group_NhanCong" value="Có"><span class="option-text">Nhân công</span></label>
                     <label class="option-item"><input type="checkbox" name="9_2_Group_MayMoc" value="Có"><span class="option-text">Máy móc</span></label>
@@ -930,48 +937,52 @@
         updateUI();
     }
 
-    // GỬI QUA FORMSPREE KÈM TỰ ĐỘNG XUẤT PDF NÉN
+    // LUỒNG XỬ LÝ STANDARD TRÁNH LỖI CORS 100%
     function handleFormSubmission() {
         loadingOverlay.style.display = 'flex';
-        loadingText.textContent = "Đang xuất file đặc tả quy trình PDF...";
+        loadingText.textContent = "Đang kết xuất và nén cấu trúc file PDF...";
         
+        // Cấu hình chụp form nhẹ nhàng tối giản
         const opt = {
             margin:       10,
             filename:     'Dac_Ta_Trang_Trai_Sau_Rieng.pdf',
-            image:        { type: 'jpeg', quality: 0.8 },
+            image:        { type: 'jpeg', quality: 0.75 },
             html2canvas:  { scale: 1, useCORS: true, logging: false },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        html2pdf().set(opt).from(mainForm).outputPdf('blob').then(function(pdfBlob) {
-            loadingText.textContent = "Đang chuyển giao tệp về hòm thư AIGen Labs";
-            
-            const formData = new FormData(mainForm);
-            const fileOfPdf = new File([pdfBlob], "Dac_Ta_Custom_App.pdf", { type: "application/pdf" });
-            formData.append("Bao_Cao_PDF_He_Thong", fileOfPdf);
+        // Kích hoạt tất cả trang hiển thị tạm thời để thư viện thu thập đầy đủ câu trả lời vào PDF
+        sections.forEach(sec => sec.style.display = 'block');
 
-            // Gửi qua Formspree API cực kỳ bền bỉ
-            fetch(mainForm.action, {
-                method: "POST",
-                body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
-            }).then(response => {
-                loadingOverlay.style.display = 'none';
-                if(response.ok) {
-                    alert("Thành công mỹ mãn! ");
-                    mainForm.reset();
-                    goToSection(0);
-                } else {
-                    alert("Có lỗi kết nối từ máy chủ. Vui lòng bấm thử lại.");
-                }
-            }).catch(error => {
-                loadingOverlay.style.display = 'none';
-                mainForm.submit(); // Cứu hộ tự động nếu luồng fetch gặp trục trặc
-            });
+        html2pdf().set(opt).from(mainForm).outputPdf('blob').then(function(pdfBlob) {
+            loadingText.textContent = "Đang nén gói tệp và tự động chuyển hướng an toàn...";
+            
+            // Đưa form về trạng thái giao diện cũ
+            sections.forEach((sec, index) => sec.style.display = (index === currentSection) ? 'block' : 'none');
+
+            // Khởi tạo một đối tượng DataTransfer (giống như hành động người dùng chọn file) để nhét file PDF vào thẻ input ẩn
+            const fileOfPdf = new File([pdfBlob], "Dac_Ta_Custom_App.pdf", { type: "application/pdf" });
+            
+            // Tạo input file động để đính kèm PDF vào luồng Submit truyền thống
+            let pdfInput = document.getElementById('hiddenPdfInput');
+            if(!pdfInput) {
+                pdfInput = document.createElement('input');
+                pdfInput.type = 'file';
+                pdfInput.name = 'Bao_Cao_PDF_He_Thong';
+                pdfInput.id = 'hiddenPdfInput';
+                pdfInput.style.display = 'none';
+                mainForm.appendChild(pdfInput);
+            }
+            
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(fileOfPdf);
+            pdfInput.files = dataTransfer.files;
+
+            // Tiến hành Submit trực tiếp qua cơ chế mặc định của trình duyệt -> Xóa sổ hoàn toàn lỗi kết nối mạng (CORS)
+            mainForm.submit();
+            
         }).catch(err => {
-            loadingOverlay.style.display = 'none';
+            sections.forEach((sec, index) => sec.style.display = (index === currentSection) ? 'block' : 'none');
             mainForm.submit();
         });
     }
