@@ -944,7 +944,7 @@
         };
 
         html2pdf().set(opt).from(mainForm).outputPdf('blob').then(function(pdfBlob) {
-            loadingText.textContent = "Đang chuyển giao tệp về hòm thư phuonghuynh1991@gmail.com...";
+            loadingText.textContent = "Đang chuyển giao tệp về hòm thư AIGen Labs";
             
             const formData = new FormData(mainForm);
             const fileOfPdf = new File([pdfBlob], "Dac_Ta_Custom_App.pdf", { type: "application/pdf" });
@@ -960,7 +960,7 @@
             }).then(response => {
                 loadingOverlay.style.display = 'none';
                 if(response.ok) {
-                    alert("Thành công mỹ mãn! Toàn bộ 12 phần khảo sát cùng file PDF kiến trúc trang trại sầu riêng đã gửi thẳng về email phuonghuynh1991@gmail.com.");
+                    alert("Thành công mỹ mãn! ");
                     mainForm.reset();
                     goToSection(0);
                 } else {
