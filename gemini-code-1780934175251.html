@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Form - Khảo Sát Vận Hành Sầu Riêng</title>
+    
+    <!-- Tích hợp các thư viện chuyển đổi PDF và gửi Email trực tiếp từ Frontend -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #2e7d32; 
+            --primary-light: #e8f5e9; 
+            --text-color: #263238; 
+            --border-color: #cfd8dc;
+            --white: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #f9fbf9;
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(46, 125, 50, 0.05);
+            padding: 20px;
+            position: relative;
+            border: 1px solid rgba(46, 125, 50, 0.1);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .progress-bar-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            height: 2px;
+            background-color: var(--border-color);
+            width: 100%;
+            z-index: 1;
+        }
+
+        .progress-line-fill {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            height: 2px;
+            background-color: var(--primary-color);
+            width: 0%;
+            z-index: 2;
+            transition: width 0.3s ease;
+        }
+
+        .step-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--white);
+            border: 2px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 3;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #78909c;
+        }
+
+        .step-dot.active {
+            border-color: var(--primary-color);
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        .step-dot.completed {
+            border-color: var(--primary-color);
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-note {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }
+
+        .question-group {
+            margin-bottom: 24px;
+        }
+
+        .question-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .option-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: #fcfdfc;
+        }
+
+        .option-item input[type="radio"], 
+        .option-item input[type="checkbox"] {
+            margin-top: 3px;
+            margin-right: 12px;
+            accent-color: var(--primary-color);
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        .option-text {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .option-item.selected {
+            border-color: var(--primary-color);
+            background-color: var(--primary-light);
+        }
+
+        /* Ô nhập liệu Khác */
+        .other-input-wrapper {
+            margin-top: 8px;
+            display: none;
+            width: 100%;
+        }
+
+        .other-text-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            background-color: #fff;
+        }
+
+        /* Nút Upload file dữ liệu mẫu */
+        .file-upload-container {
+            border: 2px dashed var(--border-color);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            background-color: #fafafa;
+            cursor: pointer;
+            transition: border 0.2s;
+        }
+
+        .file-upload-container:hover {
+            border-color: var(--primary-color);
+        }
+
+        .file-upload-container input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-label {
+            font-size: 14px;
+            color: #555;
+            cursor: pointer;
+            display: block;
+        }
+
+        .file-list {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--primary-color);
+            font-weight: 600;
+            text-align: left;
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 30px;
+            border-top: 1px solid #edf1f2;
+            padding-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .btn-back {
+            background-color: #f1f3f4;
+            color: #5f6368;
+        }
+
+        .btn-next {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        .btn-back:disabled {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Hiệu ứng đang xử lý gửi mail */
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            top:0; left:0; width:100%; height:100%;
+            background: rgba(255,255,255,0.9);
+            z-index: 10;
+            border-radius: 16px;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container" id="formContainer">
+    
+    <div class="loading-overlay" id="loadingOverlay">
+        <div>Đang xuất PDF & gửi dữ liệu về Email...</div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar-line"></div>
+        <div class="progress-line-fill" id="progressFill"></div>
+        <div class="step-dot active" onclick="goToSection(0)">1</div>
+        <div class="step-dot" onclick="goToSection(1)">2</div>
+        <div class="step-dot" onclick="goToSection(2)">3</div>
+        <div class="step-dot" onclick="goToSection(3)">4</div>
+        <div class="step-dot" onclick="goToSection(4)">5</div>
+    </div>
+
+    <!-- Endpoint FormSubmit miễn phí tự động chuyển hướng về email phương huỳnh -->
+    <form id="masterForm" action="https://formsubmit.co/phuonghuynh1991@gmail.com" method="POST" enctype="multipart/form-data">
+        
+        <!-- Các cấu hình ẩn cho cổng FormSubmit -->
+        <input type="hidden" name="_subject" value="[Báo Cáo Trang Trại Sầu Riêng] - Dữ liệu Khảo Sát Master Form">
+        <input type="hidden" name="_captcha" value="false">
+
+        <!-- SECTION 1 -->
+        <div class="form-section active">
+            <div class="section-note">Phần 1 / 5</div>
+            <h2>Quy mô & Dữ liệu cốt lõi</h2>
+            
+            <div class="question-group">
+                <div class="question-title">1. Quy mô diện tích và độ tuổi vườn sầu riêng hiện tại:</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="radio" name="Q1_Quy_Mo" value="Duoi_20ha"><span class="option-text">Quy mô vừa (Dưới 20 ha) – Vườn đồng đều một độ tuổi.</span></label>
+                    <label class="option-item"><input type="radio" name="Q1_Quy_Mo" value="20_100ha"><span class="option-text">Quy mô lớn (Từ 20 - 100 ha) – Nhiều lô có độ tuổi khác nhau.</span></label>
+                    <label class="option-item"><input type="radio" name="Q1_Quy_Mo" value="Tren_100ha"><span class="option-text">Quy mô đại trang trại (Trên 100 ha) – Nhiều phân khu, nhiều giống (Ri6, Monthong...).</span></label>
+                    <label class="option-item"><input type="radio" name="Q1_Quy_Mo" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="Q1_Quy_Mo_Khac" class="other-text-input" placeholder="Nhập quy mô cụ thể của anh/chị..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">2. Phương thức theo dõi cây sầu riêng trên thực địa:</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="radio" name="Q2_Theo_Doi" value="Theo_Lo"><span class="option-text">Quản lý tổng thể theo Lô / Khu vực (Ví dụ: Lô A có 500 cây).</span></label>
+                    <label class="option-item"><input type="radio" name="Q2_Theo_Doi" value="Chi_Tiet_Cay"><span class="option-text">Quản lý chi tiết đến từng Cây bằng mã định danh riêng để kiểm tra xì mủ, rụng trái.</span></label>
+                    <label class="option-item"><input type="radio" name="Q2_Theo_Doi" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="Q2_Theo_Doi_Khac" class="other-text-input" placeholder="Nhập phương thức khác..."></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2 -->
+        <div class="form-section">
+            <div class="section-note">Phần 2 / 5</div>
+            <h2>Năng lực người dùng (UI/UX)</h2>
+            
+            <div class="question-group">
+                <div class="question-title">3. Khả năng công nghệ của Kỹ thuật viên (KTV) trực tiếp ngoài vườn:</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="radio" name="Q3_Nang_Luc_KTV" value="Thap"><span class="option-text">Thấp: Chỉ quen tay chân (Cần app nút bấm to, báo cáo bằng chụp ảnh/checklist).</span></label>
+                    <label class="option-item"><input type="radio" name="Q3_Nang_Luc_KTV" value="Trung_Binh"><span class="option-text">Trung bình: Có thể tự nhập số liệu đo lường (Độ pH đất, độ ẩm, số béc nghẹt).</span></label>
+                    <label class="option-item"><input type="radio" name="Q3_Nang_Luc_KTV" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="Q3_Nang_Luc_KTV_Khac" class="other-text-input" placeholder="Nhập đặc thù nhân sự khác..."></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3 -->
+        <div class="form-section">
+            <div class="section-note">Phần 3 / 5</div>
+            <h2>Điểm nghẽn phối hợp</h2>
+            
+            <div class="question-group">
+                <div class="question-title">4. Đâu là điểm nghẽn lớn nhất gây chậm trễ trong mùa vụ sầu riêng? (Chọn nhiều phương án)</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="Q4_Diem_Nghen[]" value="Het_Thuoc_Dot_Xuat"><span class="option-text">KTV Trưởng -> Kho: Cần phun thuốc khẩn cấp nhưng Kho đột ngột hết thuốc.</span></label>
+                    <label class="option-item"><input type="checkbox" name="Q4_Diem_Nghen[]" value="Phun_Sai_Lieu_Luong"><span class="option-text">KTV Trưởng -> KTV ngoài vườn: Phun sai liều lượng vào giai đoạn nhạy cảm gây rụng bông.</span></label>
+                    <label class="option-item"><input type="checkbox" name="Q4_Diem_Nghen[]" value="Troi_Tin_Zalo"><span class="option-text">KTV -> KTV Trưởng: Phát hiện nấm bệnh xì mủ báo qua Zalo bị trôi tin, xử lý chậm.</span></label>
+                    <label class="option-item"><input type="checkbox" name="Q4_Diem_Nghen[]" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="Q4_Diem_Nghen_Khac" class="other-text-input" placeholder="Nhập điểm nghẽn khác đang mắc phải..."></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4 -->
+        <div class="form-section">
+            <div class="section-note">Phần 4 / 5</div>
+            <h2>Cấu hình giao việc & Nghiệm thu</h2>
+            
+            <div class="question-group">
+                <div class="question-title">5. Quy trình xuất kho khi tạo Task (Ví dụ: "Phun thuốc chặn đọt"):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="radio" name="Q5_Xuat_Kho" value="Tu_Dong_Lien_Ket"><span class="option-text">Luồng tự động liên kết: Tạo task -> Tự động tính lượng thuốc -> Gửi phiếu duyệt thẳng đến Kho.</span></label>
+                    <label class="option-item"><input type="radio" name="Q5_Xuat_Kho" value="Doc_Lap_Thu_Cong"><span class="option-text">Luồng độc lập: Giao việc bằng chữ -> KTV ra gặp thủ kho xin xuất tay -> Cập nhật app sau.</span></label>
+                    <label class="option-item"><input type="radio" name="Q5_Xuat_Kho" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="Q5_Xuat_Kho_Khac" class="other-text-input" placeholder="Nhập quy trình kho mong muốn..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">6. Cách thức KTV ngoài vườn nghiệm thu task trung thực:</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="radio" name="Q6_Nghiem_Thu" value="QR_GPS"><span class="option-text">Bắt buộc quét mã QR hoặc Check định vị GPS đúng lô mới được hoàn thành.</span></label>
+                    <label class="option-item"><input type="radio" name="Q6_Nghiem_Thu" value="Camera_Live"><span class="option-text">Bắt buộc chụp ảnh thực tế hiện trường trực tiếp từ camera của app (khóa tải ảnh từ máy).</span></label>
+                    <label class="option-item"><input type="radio" name="Q6_Nghiem_Thu" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="Q6_Nghiem_Thu_Khac" class="other-text-input" placeholder="Nhập cách nghiệm thu khác..."></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 5 -->
+        <div class="form-section">
+            <div class="section-note">Phần 5 / 5</div>
+            <h2>Kỳ vọng Admin & Tải dữ liệu mẫu</h2>
+            
+            <div class="question-group">
+                <div class="question-title">7. Biểu đồ báo cáo nào Admin muốn nhìn thấy nhất mỗi ngày?</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="radio" name="Q7_Bao_Cao" value="Tien_Do_Mua_Vu"><span class="option-text">Báo cáo Tiến độ mùa vụ (Lô nào đang xả nhụy, nuôi trái, tỷ lệ xong việc).</span></label>
+                    <label class="option-item"><input type="radio" name="Q7_Bao_Cao" value="Chi_Phi_Realtime"><span class="option-text">Báo cáo Chi phẩm vật tư thực tế (Real-time): Hôm nay vườn đã phun hết bao nhiêu tiền.</span></label>
+                    <label class="option-item"><input type="radio" name="Q7_Bao_Cao" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="Q7_Bao_Cao_Khac" class="other-text-input" placeholder="Nhập loại báo cáo mong muốn khác..."></div>
+                </div>
+            </div>
+
+            <!-- Upload File Dữ Liệu Mẫu Của Farm -->
+            <div class="question-group">
+                <div class="question-title">8. Đính kèm File dữ liệu mẫu hiện có của trang trại (Excel, Hình ảnh sơ đồ, PDF...):</div>
+                <div class="file-upload-container" onclick="document.getElementById('farmDataFile').click()">
+                    <label class="file-upload-label" id="fileUploadLabel">
+                        📥 Nhấp vào đây để tải lên File mẫu (Excel, Sổ sách, Bản đồ...)
+                    </label>
+                    <!-- Sử dụng cổng nhận file đính kèm của FormSubmit -->
+                    <input type="file" name="attachment" id="farmDataFile" accept=".xlsx, .xls, .csv, .pdf, .jpg, .png" onchange="displayFileName()">
+                    <div class="file-list" id="fileNameDisplay"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button type="button" class="btn-back" id="btnBack" onclick="changeSection(-1)" disabled>Quay lại</button>
+            <button type="button" class="btn-next" id="btnNext" onclick="changeSection(1)">Tiếp theo</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    let currentSection = 0;
+    const sections = document.querySelectorAll('.form-section');
+    const dots = document.querySelectorAll('.step-dot');
+    const btnBack = document.getElementById('btnBack');
+    const btnNext = document.getElementById('btnNext');
+    const progressFill = document.getElementById('progressFill');
+    const mainForm = document.getElementById('masterForm');
+
+    // Quản lý việc click chọn Option & Đóng mở Ô nhập liệu tự do "Khác"
+    document.querySelectorAll('.option-item input').forEach(input => {
+        input.addEventListener('change', function() {
+            const listContainer = this.closest('.option-list');
+            
+            if (this.type === 'radio') {
+                listContainer.querySelectorAll('.option-item').forEach(item => item.classList.remove('selected'));
+                listContainer.querySelectorAll('.other-input-wrapper').forEach(wrapper => wrapper.style.display = 'none');
+            }
+
+            if (this.checked) {
+                this.closest('.option-item').classList.add('selected');
+                if(this.classList.contains('trigger-other')) {
+                    listContainer.querySelector('.other-input-wrapper').style.display = 'block';
+                    listContainer.querySelector('.other-text-input').focus();
+                }
+            } else {
+                this.closest('.option-item').classList.remove('selected');
+                if(this.classList.contains('trigger-other')) {
+                    listContainer.querySelector('.other-input-wrapper').style.display = 'none';
+                }
+            }
+        });
+    });
+
+    // Hiện tên file đã upload lên giao diện mobile
+    function displayFileName() {
+        const fileInput = document.getElementById('farmDataFile');
+        const display = document.getElementById('fileNameDisplay');
+        if(fileInput.files.length > 0) {
+            display.textContent = "✔ Đã chọn file: " + fileInput.files[0].name;
+        }
+    }
+
+    function updateUI() {
+        sections.forEach((sec, index) => sec.classList.toggle('active', index === currentSection));
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentSection);
+            dot.classList.toggle('completed', index < currentSection);
+        });
+
+        const progressPercent = (currentSection / (sections.length - 1)) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+
+        btnBack.disabled = (currentSection === 0);
+        btnNext.textContent = (currentSection === sections.length - 1) ? "Gửi Báo Cáo Về Email" : "Tiếp theo";
+        btnNext.style.backgroundColor = (currentSection === sections.length - 1) ? "#1b5e20" : "var(--primary-color)";
+    }
+
+    function changeSection(direction) {
+        if (direction === 1 && currentSection === sections.length - 1) {
+            handleFormSubmission();
+            return;
+        }
+        currentSection += direction;
+        updateUI();
+        window.scrollTo(0, 0);
+    }
+
+    function goToSection(index) {
+        currentSection = index;
+        updateUI();
+    }
+
+    // Xử lý nén dữ liệu thành file PDF và submit đồng thời cả file PDF lẫn file đính kèm
+    function handleFormSubmission() {
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        
+        // Cấu hình chuyển đổi giao diện sang file PDF tinh gọn thanh lịch
+        const element = document.getElementById('masterForm');
+        const opt = {
+            margin:       10,
+            filename:     'Khao_Sat_Trang_Trai_Sau_Rieng.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Chạy ngầm xuất PDF và submit form bằng API của FormSubmit để gửi thẳng về mail
+        html2pdf().set(opt).from(element).outputPdf('blob').then(function(pdfBlob) {
+            // Tạo một file ảo tự động đính kèm vào payload gửi đi
+            const fileOfPdf = new File([pdfBlob], "Bao_Cao_Khao_Sat_Form.pdf", { type: "application/pdf" });
+            
+            // Tạo FormData mới để đóng gói tất cả dữ liệu form chính xác nhất
+            const formData = new FormData(mainForm);
+            formData.append("Bao_Cao_PDF_He_Thong", fileOfPdf);
+
+            // Gửi dữ liệu đi
+            fetch(mainForm.action, {
+                method: "POST",
+                body: formData
+            }).then(response => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                alert("Thành công! Toàn bộ file dữ liệu mẫu cùng Bản báo cáo PDF quy trình trang trại đã được gửi đến email: phuonghuynh1991@gmail.com.");
+            }).catch(error => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                alert("Có lỗi kết nối mạng xảy ra, tuy nhiên bạn vẫn có thể kiểm tra lại hòm thư.");
+            });
+        });
+    }
+    
+    updateUI();
+</script>
+</body>
+</html>
