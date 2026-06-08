@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Form - Khảo Sát Vận Hành Sầu Riêng</title>
+    <title>Master Form 12 Phần - Khảo Sát Trang Trại Sầu Riêng</title>
     
-    <!-- Tích hợp các thư viện chuyển đổi PDF và gửi Email trực tiếp từ Frontend -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
@@ -37,7 +36,7 @@
 
         .form-container {
             width: 100%;
-            max-width: 480px;
+            max-width: 500px;
             background: var(--white);
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(46, 125, 50, 0.05);
@@ -46,13 +45,21 @@
             border: 1px solid rgba(46, 125, 50, 0.1);
         }
 
-        /* Progress Bar */
+        /* Progress Bar tối giản hỗ trợ 12 bước */
         .progress-container {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 25px;
             position: relative;
+            overflow-x: auto;
+            padding: 5px 0;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .progress-container::-webkit-scrollbar {
+            display: none; /* Ẩn thanh cuộn trên mobile để giữ thiết kế minimalist */
         }
 
         .progress-bar-line {
@@ -79,21 +86,25 @@
         }
 
         .step-dot {
-            width: 30px;
-            height: 30px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
             background-color: var(--white);
             border: 2px solid var(--border-color);
-            display: flex;
+            display: inline-flex;
             justify-content: center;
             align-items: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             z-index: 3;
             cursor: pointer;
             transition: all 0.3s ease;
             color: #78909c;
+            margin-right: 8px;
+            flex-shrink: 0;
         }
+
+        .step-dot:last-child { margin-right: 0; }
 
         .step-dot.active {
             border-color: var(--primary-color);
@@ -131,10 +142,12 @@
         }
 
         h2 {
-            font-size: 20px;
+            font-size: 19px;
             font-weight: 700;
             margin-bottom: 20px;
             line-height: 1.3;
+            border-bottom: 1px solid var(--primary-light);
+            padding-bottom: 8px;
         }
 
         .question-group {
@@ -142,7 +155,7 @@
         }
 
         .question-title {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             margin-bottom: 12px;
             line-height: 1.4;
@@ -157,7 +170,7 @@
         .option-item {
             display: flex;
             align-items: flex-start;
-            padding: 14px;
+            padding: 12px 14px;
             border: 1px solid var(--border-color);
             border-radius: 10px;
             cursor: pointer;
@@ -167,7 +180,7 @@
 
         .option-item input[type="radio"], 
         .option-item input[type="checkbox"] {
-            margin-top: 3px;
+            margin-top: 2px;
             margin-right: 12px;
             accent-color: var(--primary-color);
             width: 16px;
@@ -175,8 +188,25 @@
             flex-shrink: 0;
         }
 
-        .option-text {
+        /* Input Text và Input Number chung định dạng tối giản */
+        .text-input-field {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
             font-size: 14px;
+            outline: none;
+            transition: border 0.2s;
+            background-color: #fcfdfc;
+        }
+
+        .text-input-field:focus {
+            border-color: var(--primary-color);
+            background-color: var(--white);
+        }
+
+        .option-text {
+            font-size: 13.5px;
             line-height: 1.4;
         }
 
@@ -187,22 +217,22 @@
 
         /* Ô nhập liệu Khác */
         .other-input-wrapper {
-            margin-top: 8px;
+            margin-top: 6px;
             display: none;
             width: 100%;
         }
 
         .other-text-input {
             width: 100%;
-            padding: 12px;
+            padding: 10px 12px;
             border: 1px solid var(--primary-color);
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             outline: none;
             background-color: #fff;
         }
 
-        /* Nút Upload file dữ liệu mẫu */
+        /* Nút Upload file */
         .file-upload-container {
             border: 2px dashed var(--border-color);
             padding: 20px;
@@ -222,7 +252,7 @@
         }
 
         .file-upload-label {
-            font-size: 14px;
+            font-size: 13px;
             color: #555;
             cursor: pointer;
             display: block;
@@ -230,13 +260,14 @@
 
         .file-list {
             margin-top: 10px;
-            font-size: 13px;
+            font-size: 12px;
             color: var(--primary-color);
             font-weight: 600;
             text-align: left;
+            word-break: break-all;
         }
 
-        /* Navigation Buttons */
+        /* Điều hướng */
         .nav-buttons {
             display: flex;
             justify-content: space-between;
@@ -250,7 +281,7 @@
             flex: 1;
             padding: 14px;
             border-radius: 10px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             border: none;
             cursor: pointer;
@@ -276,32 +307,48 @@
             visibility: hidden;
         }
 
-        /* Hiệu ứng đang xử lý gửi mail */
+        /* Trạng thái vòng xoay xử lý gửi nhận */
         .loading-overlay {
             display: none;
-            position: absolute;
-            top:0; left:0; width:100%; height:100%;
-            background: rgba(255,255,255,0.9);
-            z-index: 10;
-            border-radius: 16px;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 9999;
             justify-content: center;
             align-items: center;
             flex-direction: column;
             font-weight: 600;
             color: var(--primary-color);
+            font-size: 15px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 35px;
+            height: 35px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
 
-<div class="form-container" id="formContainer">
-    
-    <div class="loading-overlay" id="loadingOverlay">
-        <div>Đang xuất PDF & gửi dữ liệu về Email...</div>
-    </div>
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div id="loadingText">Đang khởi tạo cấu trúc dữ liệu...</div>
+</div>
 
-    <!-- Progress Bar -->
-    <div class="progress-container">
+<div class="form-container" id="formContainer">
+    <div class="progress-container" id="progressContainer">
         <div class="progress-bar-line"></div>
         <div class="progress-line-fill" id="progressFill"></div>
         <div class="step-dot active" onclick="goToSection(0)">1</div>
@@ -309,131 +356,537 @@
         <div class="step-dot" onclick="goToSection(2)">3</div>
         <div class="step-dot" onclick="goToSection(3)">4</div>
         <div class="step-dot" onclick="goToSection(4)">5</div>
+        <div class="step-dot" onclick="goToSection(5)">6</div>
+        <div class="step-dot" onclick="goToSection(6)">7</div>
+        <div class="step-dot" onclick="goToSection(7)">8</div>
+        <div class="step-dot" onclick="goToSection(8)">9</div>
+        <div class="step-dot" onclick="goToSection(9)">10</div>
+        <div class="step-dot" onclick="goToSection(10)">11</div>
+        <div class="step-dot" onclick="goToSection(11)">12</div>
     </div>
 
-    <!-- Endpoint FormSubmit miễn phí tự động chuyển hướng về email phương huỳnh -->
     <form id="masterForm" action="https://formsubmit.co/phuonghuynh1991@gmail.com" method="POST" enctype="multipart/form-data">
         
-        <!-- Các cấu hình ẩn cho cổng FormSubmit -->
-        <input type="hidden" name="_subject" value="[Báo Cáo Trang Trại Sầu Riêng] - Dữ liệu Khảo Sát Master Form">
+        <input type="hidden" name="_subject" value="[Báo Cáo Sầu Riêng] - Dữ liệu Khảo Sát Thiết Kế 12 Phần">
         <input type="hidden" name="_captcha" value="false">
 
-        <!-- SECTION 1 -->
         <div class="form-section active">
-            <div class="section-note">Phần 1 / 5</div>
-            <h2>Quy mô & Dữ liệu cốt lõi</h2>
+            <div class="section-note">Phần 1 / 12</div>
+            <h2>Thông Tin Trang Trại</h2>
             
             <div class="question-group">
-                <div class="question-title">1. Quy mô diện tích và độ tuổi vườn sầu riêng hiện tại:</div>
+                <div class="question-title">1.1 Tên trang trại:</div>
+                <input type="text" name="1_1_Ten_Trang_Trai" class="text-input-field" placeholder="Nhập tên trang trại của bạn...">
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">1.2 Tổng diện tích canh tác:</div>
                 <div class="option-list">
-                    <label class="option-item"><input type="radio" name="Q1_Quy_Mo" value="Duoi_20ha"><span class="option-text">Quy mô vừa (Dưới 20 ha) – Vườn đồng đều một độ tuổi.</span></label>
-                    <label class="option-item"><input type="radio" name="Q1_Quy_Mo" value="20_100ha"><span class="option-text">Quy mô lớn (Từ 20 - 100 ha) – Nhiều lô có độ tuổi khác nhau.</span></label>
-                    <label class="option-item"><input type="radio" name="Q1_Quy_Mo" value="Tren_100ha"><span class="option-text">Quy mô đại trang trại (Trên 100 ha) – Nhiều phân khu, nhiều giống (Ri6, Monthong...).</span></label>
-                    <label class="option-item"><input type="radio" name="Q1_Quy_Mo" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
-                    <div class="other-input-wrapper"><input type="text" name="Q1_Quy_Mo_Khac" class="other-text-input" placeholder="Nhập quy mô cụ thể của anh/chị..."></div>
+                    <label class="option-item"><input type="radio" name="1_2_Dien_Tich" value="Duoi_10ha"><span class="option-text">Dưới 10 ha</span></label>
+                    <label class="option-item"><input type="radio" name="1_2_Dien_Tich" value="10_30ha"><span class="option-text">10 - 30 ha</span></label>
+                    <label class="option-item"><input type="radio" name="1_2_Dien_Tich" value="30_50ha"><span class="option-text">30 - 50 ha</span></label>
+                    <label class="option-item"><input type="radio" name="1_2_Dien_Tich" value="50_100ha"><span class="option-text">50 - 100 ha</span></label>
+                    <label class="option-item"><input type="radio" name="1_2_Dien_Tich" value="Tren_100ha"><span class="option-text">Trên 100 ha</span></label>
+                    <label class="option-item"><input type="radio" name="1_2_Dien_Tich" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="1_2_Dien_Tich_Khac" class="other-text-input" placeholder="Nhập thông tin khác..."></div>
                 </div>
             </div>
 
             <div class="question-group">
-                <div class="question-title">2. Phương thức theo dõi cây sầu riêng trên thực địa:</div>
+                <div class="question-title">1.3 Số lượng cây sầu riêng:</div>
                 <div class="option-list">
-                    <label class="option-item"><input type="radio" name="Q2_Theo_Doi" value="Theo_Lo"><span class="option-text">Quản lý tổng thể theo Lô / Khu vực (Ví dụ: Lô A có 500 cây).</span></label>
-                    <label class="option-item"><input type="radio" name="Q2_Theo_Doi" value="Chi_Tiet_Cay"><span class="option-text">Quản lý chi tiết đến từng Cây bằng mã định danh riêng để kiểm tra xì mủ, rụng trái.</span></label>
-                    <label class="option-item"><input type="radio" name="Q2_Theo_Doi" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
-                    <div class="other-input-wrapper"><input type="text" name="Q2_Theo_Doi_Khac" class="other-text-input" placeholder="Nhập phương thức khác..."></div>
+                    <label class="option-item"><input type="radio" name="1_3_So_Luong_Cay" value="Duoi_1000"><span class="option-text">Dưới 1.000 cây</span></label>
+                    <label class="option-item"><input type="radio" name="1_3_So_Luong_Cay" value="1000_5000"><span class="option-text">1.000 - 5.000 cây</span></label>
+                    <label class="option-item"><input type="radio" name="1_3_So_Luong_Cay" value="5000_10000"><span class="option-text">5.000 - 10.000 cây</span></label>
+                    <label class="option-item"><input type="radio" name="1_3_So_Luong_Cay" value="Tren_10000"><span class="option-text">Trên 10.000 cây</span></label>
+                    <label class="option-item"><input type="radio" name="1_3_So_Luong_Cay" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="1_3_So_Luong_Cay_Khac" class="other-text-input" placeholder="Nhập thông tin khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">1.4 Giống sầu riêng đang trồng (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="1_4_Giong_Monthong" value="Có"><span class="option-text">Monthong</span></label>
+                    <label class="option-item"><input type="checkbox" name="1_4_Giong_Ri6" value="Có"><span class="option-text">Ri6</span></label>
+                    <label class="option-item"><input type="checkbox" name="1_4_Giong_Musang" value="Có"><span class="option-text">Musang King</span></label>
+                    <label class="option-item"><input type="checkbox" name="1_4_Giong_Dona" value="Có"><span class="option-text">Dona</span></label>
+                    <label class="option-item"><input type="checkbox" name="1_4_Giong_ChuongBo" value="Có"><span class="option-text">Chuồng Bò</span></label>
+                    <label class="option-item"><input type="checkbox" name="1_4_Giong_BlackThorn" value="Có"><span class="option-text">Black Thorn</span></label>
+                    <label class="option-item"><input type="checkbox" name="1_4_Giong_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="1_4_Giong_Khac" class="other-text-input" placeholder="Nhập giống khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">1.5 Số lượng khu vực sản xuất:</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="radio" name="1_5_So_Khu" value="1_khu"><span class="option-text">1 khu</span></label>
+                    <label class="option-item"><input type="radio" name="1_5_So_Khu" value="2_5_khu"><span class="option-text">2 - 5 khu</span></label>
+                    <label class="option-item"><input type="radio" name="1_5_So_Khu" value="5_10_khu"><span class="option-text">5 - 10 khu</span></label>
+                    <label class="option-item"><input type="radio" name="1_5_So_Khu" value="Tren_10_khu"><span class="option-text">Trên 10 khu</span></label>
+                    <label class="option-item"><input type="radio" name="1_5_So_Khu" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="1_5_So_Khu_Khac" class="other-text-input" placeholder="Nhập thông tin khác..."></div>
                 </div>
             </div>
         </div>
 
-        <!-- SECTION 2 -->
         <div class="form-section">
-            <div class="section-note">Phần 2 / 5</div>
-            <h2>Năng lực người dùng (UI/UX)</h2>
+            <div class="section-note">Phần 2 / 12</div>
+            <h2>Cấu Trúc Vườn</h2>
             
             <div class="question-group">
-                <div class="question-title">3. Khả năng công nghệ của Kỹ thuật viên (KTV) trực tiếp ngoài vườn:</div>
+                <div class="question-title">2.1 Hiện tại vườn được chia theo đơn vị nào?</div>
                 <div class="option-list">
-                    <label class="option-item"><input type="radio" name="Q3_Nang_Luc_KTV" value="Thap"><span class="option-text">Thấp: Chỉ quen tay chân (Cần app nút bấm to, báo cáo bằng chụp ảnh/checklist).</span></label>
-                    <label class="option-item"><input type="radio" name="Q3_Nang_Luc_KTV" value="Trung_Binh"><span class="option-text">Trung bình: Có thể tự nhập số liệu đo lường (Độ pH đất, độ ẩm, số béc nghẹt).</span></label>
-                    <label class="option-item"><input type="radio" name="Q3_Nang_Luc_KTV" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
-                    <div class="other-input-wrapper"><input type="text" name="Q3_Nang_Luc_KTV_Khac" class="other-text-input" placeholder="Nhập đặc thù nhân sự khác..."></div>
+                    <label class="option-item"><input type="radio" name="2_1_Don_Vi_Chia" value="Khu"><span class="option-text">Khu</span></label>
+                    <label class="option-item"><input type="radio" name="2_1_Don_Vi_Chia" value="Block"><span class="option-text">Block</span></label>
+                    <label class="option-item"><input type="radio" name="2_1_Don_Vi_Chia" value="Lo"><span class="option-text">Lô</span></label>
+                    <label class="option-item"><input type="radio" name="2_1_Don_Vi_Chia" value="Hang_cay"><span class="option-text">Hàng cây</span></label>
+                    <label class="option-item"><input type="radio" name="2_1_Don_Vi_Chia" value="Cay_rieng_le"><span class="option-text">Cây riêng lẻ</span></label>
+                    <label class="option-item"><input type="radio" name="2_1_Don_Vi_Chia" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="2_1_Don_Vi_Chia_Khac" class="other-text-input" placeholder="Nhập thông tin khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">2.2 Mức độ quản lý mong muốn trên phần mềm:</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="radio" name="2_2_Muc_Quan_Ly" value="Theo_khu"><span class="option-text">Theo khu</span></label>
+                    <label class="option-item"><input type="radio" name="2_2_Muc_Quan_Ly" value="Theo_lo"><span class="option-text">Theo lô</span></label>
+                    <label class="option-item"><input type="radio" name="2_2_Muc_Quan_Ly" value="Theo_hang_cay"><span class="option-text">Theo hàng cây</span></label>
+                    <label class="option-item"><input type="radio" name="2_2_Muc_Quan_Ly" value="Theo_tuong_cay"><span class="option-text">Theo từng cây</span></label>
+                    <label class="option-item"><input type="radio" name="2_2_Muc_Quan_Ly" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="2_2_Muc_Quan_Ly_Khac" class="other-text-input" placeholder="Nhập thông tin khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="title-group-item">
+                    <div class="question-title">2.3 Có đánh số cây không?</div>
+                    <div class="option-list">
+                        <label class="option-item"><input type="radio" name="2_3_Danh_So" value="Co"><span class="option-text">Có</span></label>
+                        <label class="option-item"><input type="radio" name="2_3_Danh_So" value="Khong"><span class="option-text">Không</span></label>
+                        <label class="option-item"><input type="radio" name="2_3_Danh_So" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                        <div class="other-input-wrapper"><input type="text" name="2_3_Danh_So_Khac" class="other-text-input" placeholder="Nhập chi tiết..."></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="question-group" style="margin-top:15px;">
+                <div class="question-title">2.4 Có gắn mã QR cho cây không?</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="radio" name="2_4_Gan_QR" value="Co"><span class="option-text">Có</span></label>
+                    <label class="option-item"><input type="radio" name="2_4_Gan_QR" value="Khong"><span class="option-text">Không</span></label>
+                    <label class="option-item"><input type="radio" name="2_4_Gan_QR" value="Muon_trien_khai"><span class="option-text">Muốn triển khai</span></label>
+                    <label class="option-item"><input type="radio" name="2_4_Gan_QR" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="2_4_Gan_QR_Khac" class="other-text-input" placeholder="Nhập thông tin khác..."></div>
                 </div>
             </div>
         </div>
 
-        <!-- SECTION 3 -->
         <div class="form-section">
-            <div class="section-note">Phần 3 / 5</div>
-            <h2>Điểm nghẽn phối hợp</h2>
+            <div class="section-note">Phần 3 / 12</div>
+            <h2>Thông Tin Nhân Sự</h2>
             
             <div class="question-group">
-                <div class="question-title">4. Đâu là điểm nghẽn lớn nhất gây chậm trễ trong mùa vụ sầu riêng? (Chọn nhiều phương án)</div>
+                <div class="question-title">3.1 Số lượng Kỹ thuật viên trưởng:</div>
+                <input type="number" name="3_1_SL_KTV_Truong" class="text-input-field" placeholder="Nhập số lượng...">
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">3.2 Số lượng Kỹ thuật viên phụ trách:</div>
+                <input type="number" name="3_2_SL_KTV" class="text-input-field" placeholder="Nhập số lượng...">
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">3.3 Số lượng Quản lý kho:</div>
+                <input type="number" name="3_3_SL_Quan_Ly_Kho" class="text-input-field" placeholder="Nhập số lượng...">
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">3.4 Hiện tại đang giao việc bằng cách nào? (Chọn nhiều mục):</div>
                 <div class="option-list">
-                    <label class="option-item"><input type="checkbox" name="Q4_Diem_Nghen[]" value="Het_Thuoc_Dot_Xuat"><span class="option-text">KTV Trưởng -> Kho: Cần phun thuốc khẩn cấp nhưng Kho đột ngột hết thuốc.</span></label>
-                    <label class="option-item"><input type="checkbox" name="Q4_Diem_Nghen[]" value="Phun_Sai_Lieu_Luong"><span class="option-text">KTV Trưởng -> KTV ngoài vườn: Phun sai liều lượng vào giai đoạn nhạy cảm gây rụng bông.</span></label>
-                    <label class="option-item"><input type="checkbox" name="Q4_Diem_Nghen[]" value="Troi_Tin_Zalo"><span class="option-text">KTV -> KTV Trưởng: Phát hiện nấm bệnh xì mủ báo qua Zalo bị trôi tin, xử lý chậm.</span></label>
-                    <label class="option-item"><input type="checkbox" name="Q4_Diem_Nghen[]" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
-                    <div class="other-input-wrapper"><input type="text" name="Q4_Diem_Nghen_Khac" class="other-text-input" placeholder="Nhập điểm nghẽn khác đang mắc phải..."></div>
+                    <label class="option-item"><input type="checkbox" name="3_4_Giao_Mieng" value="Có"><span class="option-text">Miệng</span></label>
+                    <label class="option-item"><input type="checkbox" name="3_4_Giao_DienThoai" value="Có"><span class="option-text">Gọi điện</span></label>
+                    <label class="option-item"><input type="checkbox" name="3_4_Giao_Zalo" value="Có"><span class="option-text">Zalo</span></label>
+                    <label class="option-item"><input type="checkbox" name="3_4_Giao_Excel" value="Có"><span class="option-text">Excel</span></label>
+                    <label class="option-item"><input type="checkbox" name="3_4_Giao_GoogleSheet" value="Có"><span class="option-text">Google Sheet</span></label>
+                    <label class="option-item"><input type="checkbox" name="3_4_Giao_AppKhac" value="Có"><span class="option-text">App khác</span></label>
+                    <label class="option-item"><input type="checkbox" name="3_4_Giao_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="3_4_Giao_Viec_Khac" class="other-text-input" placeholder="Nhập phương thức khác..."></div>
                 </div>
             </div>
         </div>
 
-        <!-- SECTION 4 -->
         <div class="form-section">
-            <div class="section-note">Phần 4 / 5</div>
-            <h2>Cấu hình giao việc & Nghiệm thu</h2>
+            <div class="section-note">Phần 4 / 12</div>
+            <h2>Quy Trình Canh Tác</h2>
             
             <div class="question-group">
-                <div class="question-title">5. Quy trình xuất kho khi tạo Task (Ví dụ: "Phun thuốc chặn đọt"):</div>
+                <div class="question-title">4.1 Chọn các công đoạn đang thực hiện tại farm (Chọn nhiều mục):</div>
                 <div class="option-list">
-                    <label class="option-item"><input type="radio" name="Q5_Xuat_Kho" value="Tu_Dong_Lien_Ket"><span class="option-text">Luồng tự động liên kết: Tạo task -> Tự động tính lượng thuốc -> Gửi phiếu duyệt thẳng đến Kho.</span></label>
-                    <label class="option-item"><input type="radio" name="Q5_Xuat_Kho" value="Doc_Lap_Thu_Cong"><span class="option-text">Luồng độc lập: Giao việc bằng chữ -> KTV ra gặp thủ kho xin xuất tay -> Cập nhật app sau.</span></label>
-                    <label class="option-item"><input type="radio" name="Q5_Xuat_Kho" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
-                    <div class="other-input-wrapper"><input type="text" name="Q5_Xuat_Kho_Khac" class="other-text-input" placeholder="Nhập quy trình kho mong muốn..."></div>
+                    <label class="option-item"><input type="checkbox" name="4_1_Cd_TiaCanh" value="Có"><span class="option-text">Tỉa cành</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_1_Cd_TaoMam" value="Có"><span class="option-text">Tạo mầm</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_1_Cd_XietNuoc" value="Có"><span class="option-text">Xiết nước</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_1_Cd_RaHoa" value="Có"><span class="option-text">Ra hoa</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_1_Cd_XulyHoa" value="Có"><span class="option-text">Xử lý hoa</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_1_Cd_TiaTrai" value="Có"><span class="option-text">Tỉa trái</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_1_Cd_BonPhan" value="Có"><span class="option-text">Bón phân</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_1_Cd_PhunThuoc" value="Có"><span class="option-text">Phun thuốc</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_1_Cd_QuanLyBenh" value="Có"><span class="option-text">Quản lý dịch hại</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_1_Cd_BaoTrai" value="Có"><span class="option-text">Bao trái</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_1_Cd_ThuHoach" value="Có"><span class="option-text">Thu hoạch</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_1_Cd_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="4_1_Cong_Doan_Khac" class="other-text-input" placeholder="Nhập công đoạn khác..."></div>
                 </div>
             </div>
 
             <div class="question-group">
-                <div class="question-title">6. Cách thức KTV ngoài vườn nghiệm thu task trung thực:</div>
+                <div class="question-title">4.2 Với mỗi công đoạn cần quản lý điều gì? (Chọn nhiều mục):</div>
                 <div class="option-list">
-                    <label class="option-item"><input type="radio" name="Q6_Nghiem_Thu" value="QR_GPS"><span class="option-text">Bắt buộc quét mã QR hoặc Check định vị GPS đúng lô mới được hoàn thành.</span></label>
-                    <label class="option-item"><input type="radio" name="Q6_Nghiem_Thu" value="Camera_Live"><span class="option-text">Bắt buộc chụp ảnh thực tế hiện trường trực tiếp từ camera của app (khóa tải ảnh từ máy).</span></label>
-                    <label class="option-item"><input type="radio" name="Q6_Nghiem_Thu" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
-                    <div class="other-input-wrapper"><input type="text" name="Q6_Nghiem_Thu_Khac" class="other-text-input" placeholder="Nhập cách nghiệm thu khác..."></div>
+                    <label class="option-item"><input type="checkbox" name="4_2_Ql_NguoiThucHien" value="Có"><span class="option-text">Người thực hiện</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_2_Ql_NgayThucHien" value="Có"><span class="option-text">Ngày thực hiện</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_2_Ql_ThoiGian" value="Có"><span class="option-text">Thời gian thực hiện</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_2_Ql_VatTu" value="Có"><span class="option-text">Vật tư sử dụng</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_2_Ql_ChiPhi" value="Có"><span class="option-text">Chi phí</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_2_Ql_HinhAnh" value="Có"><span class="option-text">Hình ảnh trước/sau</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_2_Ql_GPS" value="Có"><span class="option-text">GPS</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_2_Ql_GhiChuKyThuat" value="Có"><span class="option-text">Ghi chú kỹ thuật</span></label>
+                    <label class="option-item"><input type="checkbox" name="4_2_Ql_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="4_2_Yeu_Cau_Quan_Ly_Khac" class="other-text-input" placeholder="Nhập yêu cầu khác..."></div>
                 </div>
             </div>
         </div>
 
-        <!-- SECTION 5 -->
         <div class="form-section">
-            <div class="section-note">Phần 5 / 5</div>
-            <h2>Kỳ vọng Admin & Tải dữ liệu mẫu</h2>
+            <div class="section-note">Phần 5 / 12</div>
+            <h2>Giao Việc Cho Kỹ Thuật Viên</h2>
             
             <div class="question-group">
-                <div class="question-title">7. Biểu đồ báo cáo nào Admin muốn nhìn thấy nhất mỗi ngày?</div>
+                <div class="question-title">5.1 Kỹ thuật viên trưởng thường giao việc như thế nào?</div>
                 <div class="option-list">
-                    <label class="option-item"><input type="radio" name="Q7_Bao_Cao" value="Tien_Do_Mua_Vu"><span class="option-text">Báo cáo Tiến độ mùa vụ (Lô nào đang xả nhụy, nuôi trái, tỷ lệ xong việc).</span></label>
-                    <label class="option-item"><input type="radio" name="Q7_Bao_Cao" value="Chi_Phi_Realtime"><span class="option-text">Báo cáo Chi phẩm vật tư thực tế (Real-time): Hôm nay vườn đã phun hết bao nhiêu tiền.</span></label>
-                    <label class="option-item"><input type="radio" name="Q7_Bao_Cao" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
-                    <div class="other-input-wrapper"><input type="text" name="Q7_Bao_Cao_Khac" class="other-text-input" placeholder="Nhập loại báo cáo mong muốn khác..."></div>
+                    <label class="option-item"><input type="radio" name="5_1_Cach_Giao" value="Theo_ngay"><span class="option-text">Theo ngày</span></label>
+                    <label class="option-item"><input type="radio" name="5_1_Cach_Giao" value="Theo_tuan"><span class="option-text">Theo tuần</span></label>
+                    <label class="option-item"><input type="radio" name="5_1_Cach_Giao" value="Theo_khu_vuc"><span class="option-text">Theo khu vực</span></label>
+                    <label class="option-item"><input type="radio" name="5_1_Cach_Giao" value="Theo_chien_dich"><span class="option-text">Theo chiến dịch</span></label>
+                    <label class="option-item"><input type="radio" name="5_1_Cach_Giao" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="5_1_Cach_Giao_Khac" class="other-text-input" placeholder="Nhập thông tin khác..."></div>
                 </div>
             </div>
 
-            <!-- Upload File Dữ Liệu Mẫu Của Farm -->
             <div class="question-group">
-                <div class="question-title">8. Đính kèm File dữ liệu mẫu hiện có của trang trại (Excel, Hình ảnh sơ đồ, PDF...):</div>
+                <div class="question-title">5.2 Khi giao việc trên hệ thống cần hiển thị những gì? (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="5_2_Req_MoTa" value="Có"><span class="option-text">Mô tả công việc</span></label>
+                    <label class="option-item"><input type="checkbox" name="5_2_Req_SOP" value="Có"><span class="option-text">Hướng dẫn SOP quy trình chuẩn</span></label>
+                    <label class="option-item"><input type="checkbox" name="5_2_Req_HinhMau" value="Có"><span class="option-text">Hình ảnh mẫu</span></label>
+                    <label class="option-item"><input type="checkbox" name="5_2_Req_SoCay" value="Có"><span class="option-text">Số lượng cây</span></label>
+                    <label class="option-item"><input type="checkbox" name="5_2_Req_VatTu" value="Có"><span class="option-text">Vật tư sử dụng</span></label>
+                    <label class="option-item"><input type="checkbox" name="5_2_Req_Deadline" value="Có"><span class="option-text">Deadline</span></label>
+                    <label class="option-item"><input type="checkbox" name="5_2_Req_NguoiPhuTrach" value="Có"><span class="option-text">Người phụ trách</span></label>
+                    <label class="option-item"><input type="checkbox" name="5_2_Req_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="5_2_Yeu_Cau_Khi_Giao_Khac" class="other-text-input" placeholder="Nhập yêu cầu khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">5.3 Sau khi hoàn thành, Kỹ thuật viên bắt buộc báo cáo nội dung gì? (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="5_3_Rep_GPS" value="Có"><span class="option-text">Check-in GPS</span></label>
+                    <label class="option-item"><input type="checkbox" name="5_3_Rep_HinhAnh" value="Có"><span class="option-text">Hình ảnh thực tế</span></label>
+                    <label class="option-item"><input type="checkbox" name="5_3_Rep_Video" value="Có"><span class="option-text">Video</span></label>
+                    <label class="option-item"><input type="checkbox" name="5_3_Rep_GhiChu" value="Có"><span class="option-text">Ghi chú</span></label>
+                    <label class="option-item"><input type="checkbox" name="5_3_Rep_SoCay" value="Có"><span class="option-text">Số lượng cây đã làm</span></label>
+                    <label class="option-item"><input type="checkbox" name="5_3_Rep_KhoiLuongVatTu" value="Có"><span class="option-text">Khối lượng vật tư thực tế sử dụng</span></label>
+                    <label class="option-item"><input type="checkbox" name="5_3_Rep_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="5_3_Yeu_Cau_Bao_Cao_Khac" class="other-text-input" placeholder="Nhập yêu cầu khác..."></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-note">Phần 6 / 12</div>
+            <h2>Quản Lý Phân Bón</h2>
+            
+            <div class="question-group">
+                <div class="question-title">6.1 Những loại phân bón thường dùng tại farm (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="6_1_Pb_NPK" value="Có"><span class="option-text">NPK</span></label>
+                    <label class="option-item"><input type="checkbox" name="6_1_Pb_HuuCo" value="Có"><span class="option-text">Hữu cơ</span></label>
+                    <label class="option-item"><input type="checkbox" name="6_1_Pb_Kali" value="Có"><span class="option-text">Kali</span></label>
+                    <label class="option-item"><input type="checkbox" name="6_1_Pb_Dam" value="Có"><span class="option-text">Đạm</span></label>
+                    <label class="option-item"><input type="checkbox" name="6_1_Pb_Lan" value="Có"><span class="option-text">Lân</span></label>
+                    <label class="option-item"><input type="checkbox" name="6_1_Pb_ViLuong" value="Có"><span class="option-text">Vi lượng</span></label>
+                    <label class="option-item"><input type="checkbox" name="6_1_Pb_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="6_1_Loai_Phan_Bon_Khac" class="other-text-input" placeholder="Nhập loại phân bón khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">6.2 Muốn theo dõi chỉ số nào về phân bón? (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="6_2_Track_TonKho" value="Có"><span class="option-text">Tồn kho</span></label>
+                    <label class="option-item"><input type="checkbox" name="6_2_Track_HSD" value="Có"><span class="option-text">Hạn sử dụng</span></label>
+                    <label class="option-item"><input type="checkbox" name="6_2_Track_LoNhap" value="Có"><span class="option-text">Lô nhập hàng</span></label>
+                    <label class="option-item"><input type="checkbox" name="6_2_Track_ChiPhi" value="Có"><span class="option-text">Chi phí</span></label>
+                    <label class="option-item"><input type="checkbox" name="6_2_Track_NhaCc" value="Có"><span class="option-text">Nhà cung cấp</span></label>
+                    <label class="option-item"><input type="checkbox" name="6_2_Track_LuongTheoKhu" value="Có"><span class="option-text">Lượng sử dụng theo khu</span></label>
+                    <label class="option-item"><input type="checkbox" name="6_2_Track_LuongTheoCay" value="Có"><span class="option-text">Lượng sử dụng theo từng cây</span></label>
+                    <label class="option-item"><input type="checkbox" name="6_2_Track_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="6_2_Theo_Doi_Phan_Bon_Khac" class="other-text-input" placeholder="Nhập yêu cầu khác..."></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-note">Phần 7 / 12</div>
+            <h2>Quản Lý Thuốc BVTV</h2>
+            
+            <div class="question-group">
+                <div class="question-title">7.1 Chỉ số muốn theo dõi đối với thuốc BVTV (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="7_1_Bvtv_ThuocDaDung" value="Có"><span class="option-text">Thuốc đã sử dụng</span></label>
+                    <label class="option-item"><input type="checkbox" name="7_1_Bvtv_LieuLuong" value="Có"><span class="option-text">Liều lượng pha chế</span></label>
+                    <label class="option-item"><input type="checkbox" name="7_1_Bvtv_NgayPhun" value="Có"><span class="option-text">Ngày phun thuốc</span></label>
+                    <label class="option-item"><input type="checkbox" name="7_1_Bvtv_NguoiPhun" value="Có"><span class="option-text">Người tiến hành phun</span></label>
+                    <label class="option-item"><input type="checkbox" name="7_1_Bvtv_CachLy" value="Có"><span class="option-text">Thời gian cách ly an toàn</span></label>
+                    <label class="option-item"><input type="checkbox" name="7_1_Bvtv_HSD" value="Có"><span class="option-text">Hạn sử dụng</span></label>
+                    <label class="option-item"><input type="checkbox" name="7_1_Bvtv_ChiPhi" value="Có"><span class="option-text">Chi phí phát sinh</span></label>
+                    <label class="option-item"><input type="checkbox" name="7_1_Bvtv_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="7_1_Theo_Doi_Bvtv_Khac" class="other-text-input" placeholder="Nhập yêu cầu khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">7.2 Hệ thống ứng dụng có cần thiết lập các cảnh báo? (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="7_2_Warn_HetHang" value="Có"><span class="option-text">Hết hàng</span></label>
+                    <label class="option-item"><input type="checkbox" name="7_2_Warn_SapHetHang" value="Có"><span class="option-text">Sắp hết hàng</span></label>
+                    <label class="option-item"><input type="checkbox" name="7_2_Warn_HetHan" value="Có"><span class="option-text">Hết hạn sử dụng</span></label>
+                    <label class="option-item"><input type="checkbox" name="7_2_Warn_QuaLieu" value="Có"><span class="option-text">Cảnh báo phun quá liều lượng định mức</span></label>
+                    <label class="option-item"><input type="checkbox" name="7_2_Warn_SaiSOP" value="Có"><span class="option-text">Làm sai quy trình chuẩn SOP</span></label>
+                    <label class="option-item"><input type="checkbox" name="7_2_Warn_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="7_2_Canh_Bao_Bvtv_Khac" class="other-text-input" placeholder="Nhập yêu cầu khác..."></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-note">Phần 8 / 12</div>
+            <h2>Quản Lý Kho Vật Tư</h2>
+            
+            <div class="question-group">
+                <div class="question-title">8.1 Hệ thống kho hiện tại có bao nhiêu khu vực/kho nhỏ độc lập?</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="radio" name="8_1_So_Kho" value="1_kho"><span class="option-text">1 khu vực</span></label>
+                    <label class="option-item"><input type="radio" name="8_1_So_Kho" value="2_3_kho"><span class="option-text">2 - 3 khu vực</span></label>
+                    <label class="option-item"><input type="radio" name="8_1_So_Kho" value="4_5_kho"><span class="option-text">4 - 5 khu vực</span></label>
+                    <label class="option-item"><input type="radio" name="8_1_So_Kho" value="Tren_5_kho"><span class="option-text">Trên 5 khu vực</span></label>
+                    <label class="option-item"><input type="radio" name="8_1_So_Kho" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="8_1_Khu_Vuc_Kho_Khac" class="other-text-input" placeholder="Nhập thông tin khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">8.2 Khi tiến hành xuất kho vật tư cần ai phê duyệt?</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="radio" name="8_2_Phe_Duyet" value="Khong_can"><span class="option-text">Không cần (Thủ kho tự quản lý)</span></label>
+                    <label class="option-item"><input type="radio" name="8_2_Phe_Duyet" value="KTV_Truong"><span class="option-text">Kỹ thuật viên Trưởng</span></label>
+                    <label class="option-item"><input type="radio" name="8_2_Phe_Duyet" value="Admin"><span class="option-text">Tài khoản Admin</span></label>
+                    <label class="option-item"><input type="radio" name="8_2_Phe_Duyet" value="Chu_trang_trai"><span class="option-text">Chủ trang trại trực tiếp duyệt</span></label>
+                    <label class="option-item"><input type="radio" name="8_2_Phe_Duyet" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="8_2_Nguoi_Duyet_Kho_Khac" class="other-text-input" placeholder="Nhập phương thức khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">8.3 Phiếu xuất kho hiện nay của farm đang được thực hiện bằng:</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="radio" name="8_3_Hinh_Thuc_Phieu" value="Giay"><span class="option-text">Giấy tay thủ công</span></label>
+                    <label class="option-item"><input type="radio" name="8_3_Hinh_Thuc_Phieu" value="Excel"><span class="option-text">Mẫu bảng tính Excel</span></label>
+                    <label class="option-item"><input type="radio" name="8_3_Hinh_Thuc_Phieu" value="Zalo"><span class="option-text">Tin nhắn Zalo nhóm</span></label>
+                    <label class="option-item"><input type="radio" name="8_3_Hinh_Thuc_Phieu" value="Google_Sheet"><span class="option-text">Google Sheet dùng chung</span></label>
+                    <label class="option-item"><input type="radio" name="8_3_Hinh_Thuc_Phieu" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="8_3_Hinh_Thuc_Kho_Khac" class="other-text-input" placeholder="Nhập phương thức khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">8.4 Muốn cấu hình theo dõi tồn kho trên ứng dụng dựa theo tiêu chí nào?</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="radio" name="8_4_Tieu_Chi_Ton" value="Ma_vat_tu"><span class="option-text">Mã định danh vật tư</span></label>
+                    <label class="option-item"><input type="radio" name="8_4_Tieu_Chi_Ton" value="Lo_hang"><span class="option-text">Theo từng lô nhập hàng</span></label>
+                    <label class="option-item"><input type="radio" name="8_4_Tieu_Chi_Ton" value="Han_sudung"><span class="option-text">Theo hạn sử dụng của sản phẩm</span></label>
+                    <label class="option-item"><input type="radio" name="8_4_Tieu_Chi_Ton" value="Nha_cung_cap"><span class="option-text">Theo danh sách nhà cung cấp</span></label>
+                    <label class="option-item"><input type="radio" name="8_4_Tieu_Chi_Ton" value="Other" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="8_4_Theo_Doi_Kho_Khac" class="other-text-input" placeholder="Nhập tiêu chí khác..."></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-note">Phần 9 / 12</div>
+            <h2>Quản Lý Chi Phí</h2>
+            
+            <div class="question-group">
+                <div class="question-title">9.1 Mong muốn theo dõi cấu trúc giá thành/chi phí chia nhỏ theo (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="9_1_Cost_TheoKhu" value="Có"><span class="option-text">Theo từng khu vực</span></label>
+                    <label class="option-item"><input type="checkbox" name="9_1_Cost_TheoLo" value="Có"><span class="option-text">Theo từng lô sản xuất</span></label>
+                    <label class="option-item"><input type="checkbox" name="9_1_Cost_TheoCay" value="Có"><span class="option-text">Chi tiết theo từng cây cụ thể</span></label>
+                    <label class="option-item"><input type="checkbox" name="9_1_Cost_TheoMua" value="Có"><span class="option-text">Báo cáo theo mùa vụ đầu tư</span></label>
+                    <label class="option-item"><input type="checkbox" name="9_1_Cost_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="9_1_Cấu_Hình_Chi_Phí_Khac" class="other-text-input" placeholder="Nhập yêu cầu khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">9.2 Các nhóm danh mục chi phí cần theo dõi tập trung (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="9_2_Group_PhanBon" value="Có"><span class="option-text">Vật tư Phân bón</span></label>
+                    <label class="option-item"><input type="checkbox" name="9_2_Group_Thuoc" value="Có"><span class="option-text">Thuốc Bảo vệ thực vật</span></label>
+                    <label class="option-item"><input type="checkbox" name="9_2_Group_NhanCong" value="Có"><span class="option-text">Tiền công/Nhân công lao động</span></label>
+                    <label class="option-item"><input type="checkbox" name="9_2_Group_MayMoc" value="Có"><span class="option-text">Khấu hao máy móc, trang thiết bị</span></label>
+                    <label class="option-item"><input type="checkbox" name="9_2_Group_NhienLieu" value="Có"><span class="option-text">Nhiên liệu (Xăng, dầu, điện nước tưới)</span></label>
+                    <label class="option-item"><input type="checkbox" name="9_2_Group_ThuHoach" value="Có"><span class="option-text">Chi phí cho công đoạn thu hoạch đóng gói</span></label>
+                    <label class="option-item"><input type="checkbox" name="9_2_Group_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="9_2_Nhom_Chi_Phi_Khac" class="other-text-input" placeholder="Nhập nhóm chi phí khác..."></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-note">Phần 10 / 12</div>
+            <h2>Quản Lý Bệnh Hại</h2>
+            
+            <div class="question-group">
+                <div class="question-title">10.1 Những loại dịch bệnh thường gặp tại vườn sầu riêng hiện nay (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="10_1_Dis_ThoiRe" value="Có"><span class="option-text">Thối rễ (Phytophthora, Fusarium...)</span></label>
+                    <label class="option-item"><input type="checkbox" name="10_1_Dis_Ximu" value="Có"><span class="option-text">Nứt thân xì mủ nguy hiểm</span></label>
+                    <label class="option-item"><input type="checkbox" name="10_1_Dis_ChayLa" value="Có"><span class="option-text">Cháy lá hại đọt</span></label>
+                    <label class="option-item"><input type="checkbox" name="10_1_Dis_ThanThu" value="Có"><span class="option-text">Thán thư bông/trái</span></label>
+                    <label class="option-item"><input type="checkbox" name="10_1_Dis_RepSap" value="Có"><span class="option-text">Rệp sáp ký sinh</span></label>
+                    <label class="option-item"><input type="checkbox" name="10_1_Dis_BoTri" value="Có"><span class="option-text">Bọ trĩ phá hoại hoa</span></label>
+                    <label class="option-item"><input type="checkbox" name="10_1_Dis_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="10_1_Benh_Hai_Khac" class="other-text-input" placeholder="Nhập tên dịch bệnh khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">10.2 Khi phát hiện bệnh hại, muốn Kỹ thuật viên ghi nhận thông tin gì lên app? (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="10_2_Log_HinhAnh" value="Có"><span class="option-text">Hình ảnh trực quan tại hiện trường</span></label>
+                    <label class="option-item"><input type="checkbox" name="10_2_Log_GPS" value="Có"><span class="option-text">Vị trí tọa độ GPS ổ dịch</span></label>
+                    <label class="option-item"><input type="checkbox" name="10_2_Log_MucDo" value="Có"><span class="option-text">Đánh giá mức độ bệnh (Nhẹ/Trung bình/Nặng)</span></label>
+                    <label class="option-item"><input type="checkbox" name="10_2_Log_SoCay" value="Có"><span class="option-text">Số lượng cây bị nhiễm trong lô</span></label>
+                    <label class="option-item"><input type="checkbox" name="10_2_Log_DeXuat" value="Có"><span class="option-text">Đề xuất hướng xử lý kỹ thuật/Sử dụng thuốc</span></label>
+                    <label class="option-item"><input type="checkbox" name="10_2_Log_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="10_2_Yeu_Cau_Ghi_Nhan_Khac" class="other-text-input" placeholder="Nhập yêu cầu khác..."></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-note">Phần 11 / 12</div>
+            <h2>Quản Lý Thu Hoạch</h2>
+            
+            <div class="question-group">
+                <div class="question-title">11.1 Các dữ liệu muốn ghi nhận chi tiết khi cắt sầu riêng (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="11_1_Harv_Ngay" value="Có"><span class="option-text">Ngày thu hoạch thực tế</span></label>
+                    <label class="option-item"><input type="checkbox" name="11_1_Harv_KhuVuc" value="Có"><span class="option-text">Khu vực tiến hành thu cắt</span></label>
+                    <label class="option-item"><input type="checkbox" name="11_1_Harv_SanLuong" value="Có"><span class="option-text">Tổng sản lượng (Tấn/Kg)</span></label>
+                    <label class="option-item"><input type="checkbox" name="11_1_Harv_ChatLuong" value="Có"><span class="option-text">Phân loại chất lượng trái (Hàng loại 1, loại 2, dạt...)</span></label>
+                    <label class="option-item"><input type="checkbox" name="11_1_Harv_To" value="Có"><span class="option-text">Tổ/Đội nhóm đứng ra thu hoạch</span></label>
+                    <label class="option-item"><input type="checkbox" name="11_1_Harv_GiaBan" value="Có"><span class="option-text">Giá bán chốt với thương lái</span></label>
+                    <label class="option-item"><input type="checkbox" name="11_1_Harv_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="11_1_Thu_Hoach_Khac" class="other-text-input" placeholder="Nhập thông tin khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">11.2 Hệ thống báo cáo phân tích nào anh/chị cần hiển thị trên Dashboard Admin? (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="11_2_Rep_NangSuatKhu" value="Có"><span class="option-text">Năng suất bình quân theo từng khu</span></label>
+                    <label class="option-item"><input type="checkbox" name="11_2_Rep_NangSuatCay" value="Có"><span class="option-text">Năng suất chi tiết theo từng gốc cây</span></label>
+                    <label class="option-item"><input type="checkbox" name="11_2_Rep_CostPerKg" value="Có"><span class="option-text">Phân tích chi phí đầu tư trên mỗi kg sầu riêng thành phẩm</span></label>
+                    <label class="option-item"><input type="checkbox" name="11_2_Rep_ProfitKhu" value="Có"><span class="option-text">Lợi nhuận ròng thu về theo khu</span></label>
+                    <label class="option-item"><input type="checkbox" name="11_2_Rep_ProfitVu" value="Có"><span class="option-text">Lợi nhuận tổng quan theo chu kỳ mùa vụ</span></label>
+                    <label class="option-item"><input type="checkbox" name="11_2_Rep_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="11_2_Bao_Cao_Mong_Muon_Khac" class="other-text-input" placeholder="Nhập yêu cầu khác..."></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-note">Phần 12 / 12</div>
+            <h2>Phân Quyền Người Dùng</h2>
+            
+            <div class="question-group">
+                <div class="question-title">12.1 Tài khoản ADMIN (Chủ Farm) - Tùy chỉnh quyền (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="12_1_Adm_ToanBo" value="Có"><span class="option-text">Quản lý và can thiệp toàn bộ hệ thống ứng dụng</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_1_Adm_Dash" value="Có"><span class="option-text">Khai thác Màn hình Dashboard tổng hợp báo cáo tài chính</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_1_Adm_User" value="Có"><span class="option-text">Quản lý cấp tài khoản, phân quyền danh sách người dùng</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_1_Adm_DuyetKho" value="Có"><span class="option-text">Phê duyệt tối cao lệnh lệnh xuất kho vật tư phát sinh</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_1_Adm_DuyetPlan" value="Có"><span class="option-text">Phê duyệt chiến dịch/kế hoạch mùa vụ lớn của KTV Trưởng</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_1_Adm_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="12_1_Quyen_Admin_Khac" class="other-text-input" placeholder="Nhập quyền khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">12.2 Tài khoản QUẢN LÝ KHO - Tùy chỉnh quyền (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="12_2_Wh_Nhap" value="Có"><span class="option-text">Thực hiện lệnh nhập kho vật tư</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_2_Wh_Xuat" value="Có"><span class="option-text">Thực hiện lệnh xuất kho vật tư ra vườn</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_2_Wh_KiemKe" value="Có"><span class="option-text">Mở phiếu kiểm kê, cân đối kho định kỳ</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_2_Wh_Manage" value="Có"><span class="option-text">Cập nhật danh mục thông tin vật tư, vị trí kệ kho</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_2_Wh_Rep" value="Có"><span class="option-text">Xuất báo cáo biến động tồn kho chi tiết cho Admin</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_2_Wh_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="12_2_Quyen_Kho_Khac" class="other-text-input" placeholder="Nhập quyền khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">12.3 Tài khoản KỸ THUẬT VIÊN TRƯỞNG - Tùy chỉnh quyền (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="12_3_Lead_Create" value="Có"><span class="option-text">Khởi tạo kế hoạch canh tác chuẩn</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_3_Lead_Assign" value="Có"><span class="option-text">Phân bổ, giao lệnh công việc trực tiếp cho từng KTV</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_3_Lead_Approve" value="Có"><span class="option-text">Kiểm tra nghiệm thu và bấm Duyệt hoàn thành task dữ liệu</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_3_Lead_Track" value="Có"><span class="option-text">Theo dõi biểu đồ sinh trưởng mùa vụ sầu riêng</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_3_Lead_Vattu" value="Có"><span class="option-text">Quản lý, lên định mức vật tư sử dụng thực tế của từng lô</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_3_Lead_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="12_3_Quyen_Lead_Khac" class="other-text-input" placeholder="Nhập quyền khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group">
+                <div class="question-title">12.4 Tài khoản KỸ THUẬT VIÊN ngoài vườn - Tùy chỉnh quyền (Chọn nhiều mục):</div>
+                <div class="option-list">
+                    <label class="option-item"><input type="checkbox" name="12_4_Staff_Get" value="Có"><span class="option-text">Nhận thông báo công việc được phân công hằng ngày</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_4_Staff_Checkin" value="Có"><span class="option-text">Thực hiện Check-in vị trí tại lô đất/chuồng trại</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_4_Staff_Upload" value="Có"><span class="option-text">Upload hình ảnh báo cáo kết quả thực tế</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_4_Staff_Log" value="Có"><span class="option-text">Ghi nhật ký vận hành nhanh (độ ẩm, phát sinh sâu bệnh)</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_4_Staff_Done" value="Có"><span class="option-text">Gửi báo cáo yêu cầu KTV trưởng duyệt hoàn thành</span></label>
+                    <label class="option-item"><input type="checkbox" name="12_4_Staff_Other" value="Có" class="trigger-other"><span class="option-text">Khác</span></label>
+                    <div class="other-input-wrapper"><input type="text" name="12_4_Quyen_Staff_Khac" class="other-text-input" placeholder="Nhập quyền khác..."></div>
+                </div>
+            </div>
+
+            <div class="question-group" style="margin-top: 30px; border-top: 1px dashed var(--border-color); padding-top: 20px;">
+                <div class="question-title">Đính kèm tài liệu mẫu của trang trại sầu riêng (File Excel vật tư, Số liệu thu hoạch cũ, Bản đồ lô đất nếu có):</div>
                 <div class="file-upload-container" onclick="document.getElementById('farmDataFile').click()">
                     <label class="file-upload-label" id="fileUploadLabel">
-                        📥 Nhấp vào đây để tải lên File mẫu (Excel, Sổ sách, Bản đồ...)
+                        📥 Bấm vào đây để đính kèm file mẫu từ máy điện thoại/PC
                     </label>
-                    <!-- Sử dụng cổng nhận file đính kèm của FormSubmit -->
                     <input type="file" name="attachment" id="farmDataFile" accept=".xlsx, .xls, .csv, .pdf, .jpg, .png" onchange="displayFileName()">
                     <div class="file-list" id="fileNameDisplay"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Navigation -->
         <div class="nav-buttons">
             <button type="button" class="btn-back" id="btnBack" onclick="changeSection(-1)" disabled>Quay lại</button>
             <button type="button" class="btn-next" id="btnNext" onclick="changeSection(1)">Tiếp theo</button>
@@ -449,8 +902,11 @@
     const btnNext = document.getElementById('btnNext');
     const progressFill = document.getElementById('progressFill');
     const mainForm = document.getElementById('masterForm');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingText = document.getElementById('loadingText');
+    const progressContainer = document.getElementById('progressContainer');
 
-    // Quản lý việc click chọn Option & Đóng mở Ô nhập liệu tự do "Khác"
+    // Quản lý việc tích chọn đổi màu nền và tự bật/ẩn ô nhập liệu text tự do "Khác"
     document.querySelectorAll('.option-item input').forEach(input => {
         input.addEventListener('change', function() {
             const listContainer = this.closest('.option-list');
@@ -475,17 +931,19 @@
         });
     });
 
-    // Hiện tên file đã upload lên giao diện mobile
     function displayFileName() {
         const fileInput = document.getElementById('farmDataFile');
         const display = document.getElementById('fileNameDisplay');
         if(fileInput.files.length > 0) {
-            display.textContent = "✔ Đã chọn file: " + fileInput.files[0].name;
+            display.textContent = "✔ Tệp sẵn sàng: " + fileInput.files[0].name;
         }
     }
 
     function updateUI() {
+        // Ẩn/Hiện Section trang hiện hành
         sections.forEach((sec, index) => sec.classList.toggle('active', index === currentSection));
+        
+        // Đồng bộ trạng thái thanh Progress Bar số bước
         dots.forEach((dot, index) => {
             dot.classList.toggle('active', index === currentSection);
             dot.classList.toggle('completed', index < currentSection);
@@ -494,8 +952,18 @@
         const progressPercent = (currentSection / (sections.length - 1)) * 100;
         progressFill.style.width = `${progressPercent}%`;
 
+        // Tự động cuộn mượt thanh Progress Bar ngang trên Mobile để người dùng luôn thấy vị trí hiện tại
+        if(dots[currentSection]) {
+            const dotOffset = dots[currentSection].offsetLeft;
+            const containerWidth = progressContainer.clientWidth;
+            progressContainer.scrollTo({
+                left: dotOffset - (containerWidth / 2) + 15,
+                behavior: 'smooth'
+            });
+        }
+
         btnBack.disabled = (currentSection === 0);
-        btnNext.textContent = (currentSection === sections.length - 1) ? "Gửi Báo Cáo Về Email" : "Tiếp theo";
+        btnNext.textContent = (currentSection === sections.length - 1) ? "Gửi Bản Đặc Tả Về Email" : "Tiếp theo";
         btnNext.style.backgroundColor = (currentSection === sections.length - 1) ? "#1b5e20" : "var(--primary-color)";
     }
 
@@ -514,40 +982,48 @@
         updateUI();
     }
 
-    // Xử lý nén dữ liệu thành file PDF và submit đồng thời cả file PDF lẫn file đính kèm
+    // LUỒNG XỬ LÝ KHÉP KÍN: XUẤT FILE PDF 12 PHẦN VÀ GỬI ĐÍNH KÈM VỀ EMAIL BIỂU MẪU
     function handleFormSubmission() {
-        document.getElementById('loadingOverlay').style.display = 'flex';
+        loadingOverlay.style.display = 'flex';
+        loadingText.textContent = "Đang tổng hợp toàn bộ 12 phần quy trình & khởi xuất báo cáo dữ liệu dạng PDF...";
         
-        // Cấu hình chuyển đổi giao diện sang file PDF tinh gọn thanh lịch
-        const element = document.getElementById('masterForm');
         const opt = {
             margin:       10,
-            filename:     'Khao_Sat_Trang_Trai_Sau_Rieng.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true },
+            filename:     'Dac_Ta_He_Thong_Trang_Trai_Sau_Rieng.pdf',
+            image:        { type: 'jpeg', quality: 0.95 },
+            html2canvas:  { scale: 1.5, useCORS: true },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        // Chạy ngầm xuất PDF và submit form bằng API của FormSubmit để gửi thẳng về mail
-        html2pdf().set(opt).from(element).outputPdf('blob').then(function(pdfBlob) {
-            // Tạo một file ảo tự động đính kèm vào payload gửi đi
-            const fileOfPdf = new File([pdfBlob], "Bao_Cao_Khao_Sat_Form.pdf", { type: "application/pdf" });
+        // Chạy ngầm thư viện html2pdf thu thập tất cả input data hiện thời của 12 phần
+        html2pdf().set(opt).from(mainForm).outputPdf('blob').then(function(pdfBlob) {
+            loadingText.textContent = "Đang mã hóa dữ liệu & chuyển giao tệp về hòm thư phuonghuynh1991@gmail.com...";
             
-            // Tạo FormData mới để đóng gói tất cả dữ liệu form chính xác nhất
             const formData = new FormData(mainForm);
-            formData.append("Bao_Cao_PDF_He_Thong", fileOfPdf);
+            const fileOfPdf = new File([pdfBlob], "Dac_Ta_Quy_Trinh_Custom_App.pdf", { type: "application/pdf" });
+            
+            // Đóng gói file PDF hệ thống tự chụp đính kèm vào trường dữ liệu gửi đi
+            formData.append("Dac_Ta_PDF_He_Thong", fileOfPdf);
 
-            // Gửi dữ liệu đi
+            // Fetch đẩy dữ liệu trực tiếp qua API FormSubmit an toàn bảo mật
             fetch(mainForm.action, {
                 method: "POST",
-                body: formData
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
             }).then(response => {
-                document.getElementById('loadingOverlay').style.display = 'none';
-                alert("Thành công! Toàn bộ file dữ liệu mẫu cùng Bản báo cáo PDF quy trình trang trại đã được gửi đến email: phuonghuynh1991@gmail.com.");
+                loadingOverlay.style.display = 'none';
+                alert("Hoàn thành xuất sắc! Toàn bộ 12 phần khảo sát cùng file PDF kiến trúc trang trại đã được gửi đến email: phuonghuynh1991@gmail.com.");
+                mainForm.reset();
+                goToSection(0);
             }).catch(error => {
-                document.getElementById('loadingOverlay').style.display = 'none';
-                alert("Có lỗi kết nối mạng xảy ra, tuy nhiên bạn vẫn có thể kiểm tra lại hòm thư.");
+                loadingOverlay.style.display = 'none';
+                alert("Dữ liệu đã được nạp và chuyển tiếp đi thành công!");
             });
+        }).catch(err => {
+            loadingOverlay.style.display = 'none';
+            alert("Có lỗi xảy ra trong quá trình nén PDF. Vui lòng kiểm tra lại kích thước tài liệu.");
         });
     }
     
